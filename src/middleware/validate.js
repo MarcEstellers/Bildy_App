@@ -20,10 +20,14 @@ const validate = (schema) => {
                     };
                 });
 
-                return AppError.badRequest('Error de validación', errors);
+                // IMPORTANTE: Usa next() para enviar el error al errorHandler
+                return next(AppError.badRequest('Error de validación', errors));
             }
 
             next(error);
         }
     };
 };
+
+// ESTO ES LO QUE TE FALTA:
+export default validate;

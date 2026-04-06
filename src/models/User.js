@@ -10,12 +10,12 @@ const userSchema = new Schema(
             trim: true,
             lowercase: true,
             unique: true,
-            match: [/^\S+@\S+\.\S+$/, "Por favor, usa un email válido"]
+            match: [/^\S+@\S+\.\S+$/, "Por favor, usa un formato de email válido"]
         },
         password: {
             type: String,
             required: [true, "La contraseña es requerida"],
-            select: false // No se incluye en las consultas por defecto
+            select: false // No se incluye en consultas por defecto
         },
         name: {
             type: String,
@@ -32,26 +32,22 @@ const userSchema = new Schema(
             required: [true, "El NIF es requerido"],
             unique: true,
             trim: true,
-            uppercase: true // Los NIF suelen ir en mayúsculas
+            uppercase: true
         },
         role: {
             type: String,
-            enum: {
-                values: ["admin", "guest"],
-                message: "{VALUE} no es un rol válido"
-            },
+            enum: ["admin", "guest"],
             default: "admin"
         },
         status: {
             type: String,
             enum: ["pending", "verified"],
-            default: "pending",
-            select: false
+            default: "pending"
         },
         verificationCode: {
             type: String,
-            select: false,
-            required: true
+            required: true,
+            select: false
         },
         verificationAttempts: {
             type: Number,
@@ -59,28 +55,41 @@ const userSchema = new Schema(
             select: false
         },
         company: {
-            type: Schema.Types.ObjectId, // Corregido para que funcione
+            type: Schema.Types.ObjectId,
             ref: 'Company',
-            required: [true, "La empresa es obligatoria"]
+            required: [true, "La empresa asociada es requerida"]
         },
         address: {
-            street: { type: String},
-            number: { type: String},
-            postal: { type: String},
-            city: { type: String},
-            province: { type: String}
+            street:   { type: String, default: "" },
+            number:   { type: String, default: "" },
+            postal:   { type: String, default: "" },
+            city:     { type: String, default: "" },
+            province: { type: String, default: "" }
         }
     },
     {
-        timestamps: true, // Crea createdAt y updatedAt automáticamente
-        versionKey: false // Quita el molesto campo __v
+        timestamps: true,
+        versionKey: false, // Elimina el campo __v
+        toJSON: {
+            virtuals: true, // Para que el fullName aparezca en el JSON
+            transform(doc, ret) {
+                delete ret.password;
+                delete ret.verificationCode;
+                delete ret.verificationAttempts;
+                return ret;
+            }
+        }
     }
 );
 
-// Índices para optimizar búsquedas frecuentes
-userSchema.index({status: 1, role: 1, company: 1})
-userSchema.virtual('fullName').get(() => this.name + ' ' + this.lastName)
-userSchema.index({ email: 1 });
+// Índice compuesto para optimizar búsquedas frecuentes
+userSchema.index({ status: 1, role: 1, company: 1 });
+
+// Virtual para obtener el nombre completo
+// IMPORTANTE: No usar arrow functions aquí para poder usar 'this'
+userSchema.virtual('fullName').get(function() {
+    return `${this.name} ${this.lastName}`;
+});
 
 const User = mongoose.model('User', userSchema);
 
