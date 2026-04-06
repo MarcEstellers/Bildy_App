@@ -41,3 +41,23 @@ export const schemaUserBody = z.object({
         }).optional()
     })
 });
+
+export const schemaCodeBody = z.object({
+    body: z.object({
+        code: z.string().length(6, "El codigo debe ser de 6 digitos")
+    })
+});
+
+export const schemaLoginBody = z.object({
+    body: z.object({
+        email: z
+            .string({ required_error: "El email es obligatorio" })
+            .trim()
+            .email("Formato de correo incorrecto")
+            .toLowerCase(),
+        password: z
+            .string({ required_error: "La contraseña es obligatoria" })
+            .min(8, "La contraseña debe contener mínimo 8 caracteres")
+            .max(16, "La contraseña puede contener máximo 16 caracteres")
+    })
+});
