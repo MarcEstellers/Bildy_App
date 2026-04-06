@@ -1,7 +1,7 @@
 import { ZodError } from 'zod';
-import { ApiError } from './errorHandler.js';
+import { AppError } from '../utils/AppError.js';
 
-export const validate = (schema) => {
+const validate = (schema) => {
     return async (req, res, next) => {
         try {
             await schema.parseAsync({
@@ -20,7 +20,7 @@ export const validate = (schema) => {
                     };
                 });
 
-                return ApiError.badRequest('Error de validación', errors);
+                return AppError.badRequest('Error de validación', errors);
             }
 
             next(error);
