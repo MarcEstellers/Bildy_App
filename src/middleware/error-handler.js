@@ -1,85 +1,93 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
+/**
+ * Middleware central de manejo de errores.
+ * Captura todos los errores lanzados con next(error) y los formatea.
+ */
 const errorHandler = (err, req, res, next) => {
-    // 1. Errores operacionales (AppError personalizados)
+    // 1. Errores operacionales (AppError)
     if (err.isOperational) {
         return res.status(err.statusCode).json({
             error: true,
-            code: err.code || 'OPERATIONAL_ERROR',
             message: err.message,
+            code: err.code,
             ...(err.details && { details: err.details })
         });
     }
 
-    // 2. Errores de Validación (Zod o Mongoose)
-    // Manejo de Zod
-    if (err.name === 'ZodError') {
-        return res.status(400).json({
-            error: true,
-            code: 'VALIDATION_ERROR',
-            message: 'Datos de entrada inválidos',
-            details: err.errors.map(e => ({
-                field: e.path.join('.'),
-                message: e.message
-            }))
-        });
-    }
-
-    // Manejo de Mongoose ValidationError
+    // 2. Errores de validación de Mongoose (Schema level)
     if (err instanceof mongoose.Error.ValidationError) {
+        const details = Object.values(err.errors).map(e => ({
+            field: e.path,
+            message: e.message
+        }));
         return res.status(400).json({
             error: true,
+            message: 'Error de validación en la base de datos',
             code: 'DB_VALIDATION_ERROR',
-            message: 'Error de validación en base de datos',
-            details: Object.values(err.errors).map(e => ({
-                field: e.path,
-                message: e.message
-            }))
+            details
         });
     }
 
-    // 3. Errores de Base de Datos (Duplicates y Cast)
+    // 3. Errores de Cast de Mongoose (ID mal formado)
+    if (err instanceof mongoose.Error.CastError) {
+        return res.status(400).json({
+            error: true,
+            message: `Valor inválido para el campo '${err.path}': ${err.value}`,
+            code: 'CAST_ERROR'
+        });
+    }
+
+    // 4. Errores de duplicidad en MongoDB (Unique: true)
     if (err.code === 11000) {
         const field = Object.keys(err.keyValue || {})[0];
         return res.status(409).json({
             error: true,
-            code: 'DUPLICATE_KEY',
-            message: `Ya existe un registro con ese '${field}'`
+            message: `Ya existe un registro con ese '${field}'`,
+            code: 'DUPLICATE_KEY_ERROR'
         });
     }
 
-    if (err instanceof mongoose.Error.CastError) {
+    // 5. Errores de Zod (Middleware de validación)
+    if (err.name === 'ZodError') {
+        const details = err.errors.map(e => ({
+            field: e.path.join('.'),
+            message: e.message
+        }));
         return res.status(400).json({
             error: true,
-            code: 'CAST_ERROR',
-            message: `El formato del campo '${err.path}' es inválido`
+            message: 'Datos de entrada incorrectos',
+            code: 'VALIDATION_ERROR',
+            details
         });
     }
 
-    // 4. Errores de Carga de Archivos (Multer)
+    // 6. Errores de Multer (Subida de archivos)
     const multerErrors = {
-        'LIMIT_FILE_SIZE': { message: 'Archivo muy grande', code: 'FILE_TOO_LARGE' },
-        'LIMIT_FILE_COUNT': { message: 'Demasiados archivos', code: 'TOO_MANY_FILES' }
+        'LIMIT_FILE_SIZE': { message: 'El archivo es demasiado grande', code: 'FILE_TOO_LARGE' },
+        'LIMIT_FILE_COUNT': { message: 'Has subido demasiados archivos', code: 'TOO_MANY_FILES' },
+        'LIMIT_UNEXPECTED_FILE': { message: 'Campo de archivo no esperado', code: 'UNEXPECTED_FILE' }
     };
 
     if (multerErrors[err.code]) {
         return res.status(400).json({
             error: true,
-            code: multerErrors[err.code].code,
-            message: multerErrors[err.code].message
+            ...multerErrors[err.code]
         });
     }
 
-    // 5. Error por Defecto (500 Internal Server Error)
+    // 7. Errores desconocidos o del sistema (500)
     const isProduction = process.env.NODE_ENV === 'production';
     
-    // Logueamos el error solo si no es operacional para debuguear en el servidor
-    if (!isProduction) console.error('ERROR:', err);
+    // Logueamos el error completo solo si no es producción para no ensuciar logs o por seguridad
+    if (!isProduction) {
+        console.error("INTERNAL_ERROR:", err);
+    }
 
-    return res.status(500).json({
+    res.status(500).json({
         error: true,
-        code: 'INTERNAL_ERROR',
-        message: isProduction ? 'Error interno del servidor' : err.message,
+        message: isProduction ? 'Ha ocurrido un error inesperado en el servidor' : err.message,
+        code: 'INTERNAL_SERVER_ERROR',
         ...(!isProduction && { stack: err.stack })
     });
 };

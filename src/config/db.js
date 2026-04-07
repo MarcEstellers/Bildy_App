@@ -1,12 +1,14 @@
-// mongodb+srv://marcestellers_db_user:{JWT_SECRET}@cluster0.poiq9uk.mongodb.net/
 import mongoose from 'mongoose';
 
 import env from './env.js';
 
 const dbConnect = async () => {
     const DB_URI = env.DB_URI;
+    const DB_NAME = env.DB_NAME;
     try {
-        await mongoose.connect(DB_URI);
+        await mongoose.connect(DB_URI, {
+            dbName: DB_NAME
+        });
         console.log('Conectado a MongoDB');
     } catch (error) {
         console.error('Error conectando a MongoDB:', error.message);
@@ -14,12 +16,10 @@ const dbConnect = async () => {
     }
 };
 
-// Eventos de conexión
 mongoose.connection.on('disconnected', () => {
     console.warn('Desconectado de MongoDB');
 });
 
-// Cerrar conexión al terminar la app
 process.on('SIGINT', async () => {
     await mongoose.connection.close();
     console.log('Conexión a MongoDB cerrada');

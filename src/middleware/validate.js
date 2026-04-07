@@ -1,33 +1,35 @@
 import { ZodError } from 'zod';
 import { AppError } from '../utils/AppError.js';
 
-const validate = (schema) => {
-    return async (req, res, next) => {
-        try {
-            await schema.parseAsync({
-                body: req.body,
-                query: req.query,
-                params: req.params
-            });
+/**
+ * Middleware de validación universal usando Zod.
+ * Valida body, query y params simultáneamente según el esquema proporcionado.
+ */
+const validate = (schema) => async (req, res, next) => {
+    try {
+        // parseAsync permite validaciones que requieran DB (si las tuvieras)
+        await schema.parseAsync({
+            body: req.body,
+            query: req.query,
+            params: req.params
+        });
+        
+        next();
+    } catch (error) {
+        if (error instanceof ZodError) {
+            // Mapeamos los errores de Zod a un formato amigable para el frontend
+            const details = error.issues.map(err => ({
+                field: err.path.join('.').replace('body.', '').replace('query.', '').replace('params.', ''),
+                message: err.message
+            }));
 
-            next();
-        } catch (error) {
-            if (error instanceof ZodError) {
-                const errors = error.issues.map((issue) => {
-                    return {
-                        campo: issue.path.join('.'),
-                        mensaje: issue.message
-                    };
-                });
-
-                // IMPORTANTE: Usa next() para enviar el error al errorHandler
-                return next(AppError.badRequest('Error de validación', errors));
-            }
-
-            next(error);
+            // Enviamos el error al Global Error Handler mediante next()
+            return next(AppError.badRequest('Error de validación en los datos de entrada', details));
         }
-    };
+        
+        // Si es un error desconocido, también lo pasamos al siguiente middleware
+        next(error);
+    }
 };
 
-// ESTO ES LO QUE TE FALTA:
 export default validate;

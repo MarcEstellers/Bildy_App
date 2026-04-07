@@ -14,23 +14,21 @@ const userSchema = new Schema(
         },
         password: {
             type: String,
-            required: [true, "La contraseña es requerida"],
-            select: false // No se incluye en consultas por defecto
+            required: [true, "La contraseña es requerida"], // IMPORTANTE: Siempre requerida
+            select: false 
         },
         name: {
             type: String,
-            required: [true, "El nombre es requerido"],
             trim: true
         },
         lastName: {
             type: String,
-            required: [true, "El apellido es requerido"],
             trim: true
         },
         nif: {
             type: String,
-            required: [true, "El NIF es requerido"],
-            unique: true,
+            unique: false,
+            sparse: true, // <--- CLAVE: Permite múltiples 'null/undefined' mientras el perfil no esté completo
             trim: true,
             uppercase: true
         },
@@ -46,7 +44,6 @@ const userSchema = new Schema(
         },
         verificationCode: {
             type: String,
-            required: true,
             select: false
         },
         verificationAttempts: {
@@ -57,7 +54,6 @@ const userSchema = new Schema(
         company: {
             type: Schema.Types.ObjectId,
             ref: 'Company',
-            required: [true, "La empresa asociada es requerida"]
         },
         address: {
             street:   { type: String, default: "" },
@@ -69,25 +65,25 @@ const userSchema = new Schema(
     },
     {
         timestamps: true,
-        versionKey: false, // Elimina el campo __v
+        versionKey: false,
         toJSON: {
-            virtuals: true, // Para que el fullName aparezca en el JSON
+            virtuals: true,
             transform(doc, ret) {
                 delete ret.password;
                 delete ret.verificationCode;
                 delete ret.verificationAttempts;
+                // El id de mongo suele ser más útil que _id en el frontend
+                ret.id = ret._id;
                 return ret;
             }
         }
     }
 );
 
-// Índice compuesto para optimizar búsquedas frecuentes
 userSchema.index({ status: 1, role: 1, company: 1 });
 
-// Virtual para obtener el nombre completo
-// IMPORTANTE: No usar arrow functions aquí para poder usar 'this'
 userSchema.virtual('fullName').get(function() {
+    if (!this.name && !this.lastName) return "Usuario pendiente de completar";
     return `${this.name} ${this.lastName}`;
 });
 

@@ -30,7 +30,7 @@ const companySchema = new Schema(
         },
         logo: {
             type: String,
-            required: [true, "El logo es requerido"],
+            
             trim: true
         },
         isFreelance: {
