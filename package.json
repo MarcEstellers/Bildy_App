@@ -13,7 +13,16 @@
   "jest": {
     "testEnvironment": "node",
     "setupFiles": ["./tests/env.setup.js"],
-    "testMatch": ["**/tests/**/*.test.js"]
+    "testMatch": ["**/tests/**/*.test.js"],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/services/storage.service.js",
+      "!src/services/pdf.service.js",
+      "!src/services/logger.service.js",
+      "!src/config/swagger.js",
+      "!src/index.js",
+      "!src/socket.js"
+    ]
   },
   "engines": {
     "node": ">=22"
