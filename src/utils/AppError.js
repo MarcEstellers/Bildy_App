@@ -4,13 +4,10 @@ export class AppError extends Error {
         this.statusCode = statusCode;
         this.code = code;
         this.details = details;
-        this.isOperational = true; // Indica que es un error previsto por nosotros
+        this.isOperational = true;
 
-        // Captura la pila de llamadas para facilitar el debug (excluyendo el constructor)
         Error.captureStackTrace(this, this.constructor);
     }
-
-    // Helpers
 
     static badRequest(message = 'Solicitud inválida', details = null, code = 'BAD_REQUEST') {
         return new AppError(message, 400, code, details);

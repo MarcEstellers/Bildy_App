@@ -14,21 +14,23 @@ const userSchema = new Schema(
         },
         password: {
             type: String,
-            required: [true, "La contraseña es requerida"], // IMPORTANTE: Siempre requerida
+            required: [true, "La contraseña es requerida"],     
             select: false 
         },
         name: {
             type: String,
-            trim: true
+            trim: true,
+            default: ""
         },
         lastName: {
             type: String,
-            trim: true
-        },
+            trim: true,
+            default: ""
+        }, 
         nif: {
             type: String,
-            unique: false,
-            sparse: true, // <--- CLAVE: Permite múltiples 'null/undefined' mientras el perfil no esté completo
+            unique: true,
+            sparse: true,
             trim: true,
             uppercase: true
         },
@@ -56,11 +58,11 @@ const userSchema = new Schema(
             ref: 'Company',
         },
         address: {
-            street:   { type: String, default: "" },
-            number:   { type: String, default: "" },
-            postal:   { type: String, default: "" },
-            city:     { type: String, default: "" },
-            province: { type: String, default: "" }
+            street:   { type: String, default: "x" },
+            number:   { type: String, default: "x" },
+            postal:   { type: String, default: "x" },
+            city:     { type: String, default: "x" },
+            province: { type: String, default: "x" }
         }
     },
     {
@@ -72,7 +74,6 @@ const userSchema = new Schema(
                 delete ret.password;
                 delete ret.verificationCode;
                 delete ret.verificationAttempts;
-                // El id de mongo suele ser más útil que _id en el frontend
                 ret.id = ret._id;
                 return ret;
             }

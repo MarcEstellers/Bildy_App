@@ -1,12 +1,10 @@
 import { z } from "zod";
 
-// --- Regex Auxiliares ---
 const nifRegex = /^([0-9]{8}[A-Z]|[XYZ][0-9]{7}[A-Z])$/;
 const cifRegex = /^[A-Z][0-9]{7}[0-9A-Z]$/;
 const postalRegex = /^(0[1-9]|[1-4][0-9]|5[0-2])[0-9]{3}$/;
 const verifyEmailCodeRegex = /^\d{6}$/;
 
-// --- Esquemas Reutilizables ---
 const addressSchema = z.object({
     street: z.string().trim().min(1, "La calle es obligatoria"),
     number: z.string().trim().min(1, "El número es obligatorio"),
@@ -14,8 +12,6 @@ const addressSchema = z.object({
     city: z.string().trim().min(1, "La ciudad es obligatoria"),
     province: z.string().trim().min(1, "La provincia es obligatoria")
 });
-
-// --- Esquemas Principales ---
 
 export const schemaMailBody = z.object({
     body: z.object({
@@ -43,11 +39,9 @@ export const schemaCodeBody = z.object({
 
 export const schemaCompanyBody = z.object({
     body: z.discriminatedUnion("isFreelance", [
-        // Caso Freelance: No requiere datos extra, se sacan del User
         z.object({
             isFreelance: z.literal(true)
         }),
-        // Caso Empresa: Requiere CIF y dirección propia
         z.object({
             isFreelance: z.literal(false),
             name: z.string().trim().min(1, "El nombre de la empresa es obligatorio"),
@@ -65,7 +59,6 @@ export const schemaRefreshTokenBody = z.object({
 
 export const schemaSoftDelete = z.object({
     query: z.object({
-        // Transforma el string "true"/"false" en un booleano real
         soft: z.enum(["true", "false"]).transform((val) => val === "true")
     })
 });

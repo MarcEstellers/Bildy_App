@@ -6,7 +6,6 @@ import { generateAccessToken, generateRefreshToken, getRefreshTokenExpiry } from
 import { compare, encrypt } from "../utils/handlePassword.js";
 import notificationService from "../services/notification.service.js";
 
-// --- Helpers Internos ---
 const generateRandomCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 const createSession = async (user) => {
@@ -22,8 +21,6 @@ const createSession = async (user) => {
         refresh_token: refreshTokenDoc.token
     };
 };
-
-// --- Controladores de Autenticación ---
 
 export const registerUser = async (req, res) => {
     const { email, password } = req.body;
@@ -57,7 +54,7 @@ export const registerUser = async (req, res) => {
     res.status(201).json({
         message: "Usuario registrado. Por favor, verifica tu email.",
         user,
-        code_debug: verificationCode, // <-- Para ver el código en el response de VS Code
+        code_debug: verificationCode,
         ...session
     });
 };
@@ -65,16 +62,14 @@ export const registerUser = async (req, res) => {
 export const validateEmail = async (req, res) => {
     const { code } = req.body;
     
-    // Forzamos la búsqueda para incluir campos con select: false
     const user = await User.findById(req.user._id).select('+verificationCode +verificationAttempts');
 
     if (!user) throw AppError.notFound("Usuario no encontrado");
     if (user.status === "verified") throw AppError.badRequest("Email ya verificado");
 
-    // Lógica de comparación
     if (user.verificationCode === code) {
         user.status = "verified";
-        user.verificationAttempts = 3; // Reset de intentos al acertar
+        user.verificationAttempts = 3;
         await user.save();
         
         notificationService.verifyUser({ userId: user._id, email: user.email });
@@ -82,7 +77,6 @@ export const validateEmail = async (req, res) => {
         return res.json({ message: "Usuario verificado con éxito", user });
     } 
     
-    // Gestión de intentos (Evitando el error NaN)
     const currentAttempts = typeof user.verificationAttempts === 'number' ? user.verificationAttempts : 3;
     user.verificationAttempts = currentAttempts - 1;
 
@@ -111,8 +105,6 @@ export const loginUser = async (req, res) => {
     res.json({ message: "Bienvenido", user, ...session });
 };
 
-// --- Gestión de Perfil y Empresa ---
-
 export const registerDataUser = async (req, res) => {
     const user = req.user;
     user.set(req.body);
@@ -135,7 +127,6 @@ export const registerCompany = async (req, res) => {
         return res.json({ message: "Vinculado a compañía existente", user, company });
     }
 
-    // Crear nueva compañía
     companyData.owner = user._id;
     if (companyData.isFreelance) {
         companyData.name = `${user.name} ${user.lastName}`;
@@ -164,8 +155,6 @@ export const uploadLogo = async (req, res) => {
 
     res.json({ message: "Logo actualizado", company });
 };
-
-// --- Sesiones y Seguridad ---
 
 export const refreshSession = async (req, res) => {
     const { refreshToken } = req.body;

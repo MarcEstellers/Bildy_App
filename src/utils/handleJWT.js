@@ -7,7 +7,6 @@ const JWT_SECRET = env.JWT_SECRET;
 const ACCESS_TOKEN_EXPIRES = '15m';
 const REFRESH_TOKEN_DAYS = 7;
 
-//Genera un Access Token (JWT) de corta duración
 export const generateAccessToken = (user) => {
     return jwt.sign(
         {
@@ -19,19 +18,15 @@ export const generateAccessToken = (user) => {
     );
 };
 
-//Genera un Refresh Token aleatorio y seguro (Opaco)
 export const generateRefreshToken = () => {
     return crypto.randomBytes(64).toString('hex');
 };
 
-// Calcula la fecha de expiración para el Refresh Token
 export const getRefreshTokenExpiry = () => {
     const expireDate = new Date();
     expireDate.setDate(expireDate.getDate() + REFRESH_TOKEN_DAYS);
     return expireDate;
 };
-
-//Verifica un Access Token y retorna el payload o lanza un AppError
 
 export const verifyAccessToken = (token) => {
     try {

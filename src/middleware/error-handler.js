@@ -1,11 +1,6 @@
 import mongoose from "mongoose";
 
-/**
- * Middleware central de manejo de errores.
- * Captura todos los errores lanzados con next(error) y los formatea.
- */
 const errorHandler = (err, req, res, next) => {
-    // 1. Errores operacionales (AppError)
     if (err.isOperational) {
         return res.status(err.statusCode).json({
             error: true,
@@ -15,7 +10,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // 2. Errores de validación de Mongoose (Schema level)
     if (err instanceof mongoose.Error.ValidationError) {
         const details = Object.values(err.errors).map(e => ({
             field: e.path,
@@ -29,7 +23,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // 3. Errores de Cast de Mongoose (ID mal formado)
     if (err instanceof mongoose.Error.CastError) {
         return res.status(400).json({
             error: true,
@@ -38,7 +31,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // 4. Errores de duplicidad en MongoDB (Unique: true)
     if (err.code === 11000) {
         const field = Object.keys(err.keyValue || {})[0];
         return res.status(409).json({
@@ -48,7 +40,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // 5. Errores de Zod (Middleware de validación)
     if (err.name === 'ZodError') {
         const details = err.errors.map(e => ({
             field: e.path.join('.'),
@@ -62,7 +53,6 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // 6. Errores de Multer (Subida de archivos)
     const multerErrors = {
         'LIMIT_FILE_SIZE': { message: 'El archivo es demasiado grande', code: 'FILE_TOO_LARGE' },
         'LIMIT_FILE_COUNT': { message: 'Has subido demasiados archivos', code: 'TOO_MANY_FILES' },
@@ -76,10 +66,8 @@ const errorHandler = (err, req, res, next) => {
         });
     }
 
-    // 7. Errores desconocidos o del sistema (500)
     const isProduction = process.env.NODE_ENV === 'production';
-    
-    // Logueamos el error completo solo si no es producción para no ensuciar logs o por seguridad
+
     if (!isProduction) {
         console.error("INTERNAL_ERROR:", err);
     }

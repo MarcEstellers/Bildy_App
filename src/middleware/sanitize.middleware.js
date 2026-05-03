@@ -14,23 +14,18 @@ const sanitize = (data) => {
 };
 
 const mongoSanitizeMiddleware = (req, res, next) => {
-    // Para el body y params solemos poder reasignar, 
-    // pero para estar seguros usamos Object.assign o mutación limpia
     if (req.body) {
-        const sanitizedBody = sanitize(req.body);
-        req.body = sanitizedBody; 
+        req.body = sanitize(req.body);
     }
 
     if (req.params) {
         const sanitizedParams = sanitize(req.params);
-        // En lugar de req.params = ..., mutamos el objeto original
         Object.keys(req.params).forEach(key => delete req.params[key]);
         Object.assign(req.params, sanitizedParams);
     }
 
     if (req.query) {
         const sanitizedQuery = sanitize(req.query);
-        // AQUÍ ESTABA EL FALLO: Borramos las keys viejas y metemos las limpias
         Object.keys(req.query).forEach(key => delete req.query[key]);
         Object.assign(req.query, sanitizedQuery);
     }

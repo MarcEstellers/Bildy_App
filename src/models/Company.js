@@ -44,7 +44,6 @@ const companySchema = new Schema(
     }
 );
 
-// Índice para búsquedas rápidas por CIF
 companySchema.index({ cif: 1 });
 
 const Company = mongoose.model('Company', companySchema);

@@ -8,7 +8,7 @@ const refreshTokenSchema = new Schema(
             type: String,
             required: [true, "El token es obligatorio"],
             unique: true,
-            index: true // Índice para búsquedas rápidas al refrescar sesión
+            index: true
         },
         user: {
             type: Schema.Types.ObjectId,
@@ -18,7 +18,7 @@ const refreshTokenSchema = new Schema(
         expiresAt: {
             type: Date,
             required: [true, "La fecha de expiración es obligatoria"],
-            expires: 0 // TTL Index: MongoDB borrará el documento automáticamente cuando llegue esta fecha
+            expires: 0
         },
         createdByIp: {
             type: String,
@@ -38,10 +38,6 @@ const refreshTokenSchema = new Schema(
     }
 );
 
-/**
- * Comprueba si el token sigue siendo válido.
- * Un token es activo si no ha sido revocado y no ha expirado.
- */
 refreshTokenSchema.methods.isActive = function () {
     const now = new Date();
     return !this.revokedAt && this.expiresAt > now;
