@@ -50,7 +50,7 @@ export const registerUser = async (req, res) => {
 
     const session = await createSession(user);
     
-    notificationService.registerUser({ userId: user._id, email: user.email });
+    notificationService.registerUser({ userId: user._id, email: user.email, code: verificationCode });
 
     res.status(201).json({
         message: "Usuario registrado. Por favor, verifica tu email.",
@@ -222,10 +222,11 @@ export const inviteUser = async (req, res) => {
     const existing = await User.findOne({ email });
     if (existing) throw AppError.conflict("El usuario ya está registrado");
 
+    const inviteCode = generateRandomCode();
     const invitedUser = await User.create({
         email,
         password: await encrypt(password),
-        verificationCode: generateRandomCode(),
+        verificationCode: inviteCode,
         role: "guest",
         company: admin.company,
         status: "pending"
@@ -234,7 +235,9 @@ export const inviteUser = async (req, res) => {
     notificationService.inviteUser({
         invitedEmail: email,
         companyId: admin.company,
-        invitedBy: admin._id
+        invitedBy: admin._id,
+        code: inviteCode,
+        companyName: admin.company?.name || 'tu empresa'
     });
 
     res.status(201).json({ message: "Invitación enviada", user: invitedUser });

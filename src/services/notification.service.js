@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import { sendVerificationCode, sendInvitation } from "./mail.service.js";
 
 class NotificationService extends EventEmitter {
     registerUser(userInfo) {
@@ -20,16 +21,24 @@ class NotificationService extends EventEmitter {
 
 const notificationService = new NotificationService();
 
-notificationService.on("user:registered", (info) => {
-    console.log("[Event] user:registered:", info.email);
+notificationService.on("user:registered", async (info) => {
+    try {
+        await sendVerificationCode(info.email, info.code);
+    } catch (err) {
+        console.error("[Email] Error enviando código de verificación:", err.message);
+    }
+});
+
+notificationService.on("user:invited", async (info) => {
+    try {
+        await sendInvitation(info.invitedEmail, info.code, info.companyName);
+    } catch (err) {
+        console.error("[Email] Error enviando invitación:", err.message);
+    }
 });
 
 notificationService.on("user:verified", (info) => {
     console.log("[Event] user:verified:", info.email);
-});
-
-notificationService.on("user:invited", (info) => {
-    console.log("[Event] user:invited:", info.email);
 });
 
 notificationService.on("user:deleted", (info) => {

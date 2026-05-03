@@ -8,7 +8,12 @@ const envSchema = z.object({
     JWT_SECRET: z.string().min(32, 'JWT_SECRET debe tener al menos 32 caracteres'),
     CLOUDINARY_CLOUD_NAME: z.string(),
     CLOUDINARY_API_KEY: z.string(),
-    CLOUDINARY_API_SECRET: z.string()
+    CLOUDINARY_API_SECRET: z.string(),
+    MAIL_HOST: z.string(),
+    MAIL_PORT: z.string().default('587'),
+    MAIL_USER: z.string(),
+    MAIL_PASS: z.string(),
+    MAIL_FROM: z.string()
 });
 
 const parsed = envSchema.safeParse(process.env);
