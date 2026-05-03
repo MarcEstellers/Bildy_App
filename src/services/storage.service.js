@@ -19,6 +19,7 @@ const uploadBuffer = (buffer, options) => {
 };
 
 export const uploadSignature = async (fileBuffer) => {
+    if (process.env.NODE_ENV === 'test') return 'https://test.cloudinary.com/signature.webp';
     const optimized = await sharp(fileBuffer)
         .resize({ width: 800, withoutEnlargement: true })
         .webp({ quality: 85 })
@@ -34,6 +35,7 @@ export const uploadSignature = async (fileBuffer) => {
 };
 
 export const uploadLogo = async (fileBuffer) => {
+    if (process.env.NODE_ENV === 'test') return 'https://test.cloudinary.com/logo.webp';
     const optimized = await sharp(fileBuffer)
         .resize({ width: 400, withoutEnlargement: true })
         .webp({ quality: 85 })
@@ -49,6 +51,7 @@ export const uploadLogo = async (fileBuffer) => {
 };
 
 export const uploadPdf = async (pdfBuffer) => {
+    if (process.env.NODE_ENV === 'test') return 'https://test.cloudinary.com/albaran.pdf';
     const result = await uploadBuffer(pdfBuffer, {
         folder:        'bildyapp/pdfs',
         resource_type: 'raw',

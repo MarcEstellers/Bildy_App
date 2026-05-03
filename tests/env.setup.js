@@ -1,0 +1,13 @@
+process.env.NODE_ENV = 'test';
+process.env.PORT = '3001';
+process.env.JWT_SECRET = 'test_secret_key_for_testing_only_32chars!!';
+process.env.DB_URI = 'mongodb://127.0.0.1:27017';
+process.env.DB_NAME = 'bildyapp_test';
+process.env.CLOUDINARY_CLOUD_NAME = 'test';
+process.env.CLOUDINARY_API_KEY = 'test';
+process.env.CLOUDINARY_API_SECRET = 'test';
+process.env.MAIL_HOST = 'localhost';
+process.env.MAIL_PORT = '587';
+process.env.MAIL_USER = 'test';
+process.env.MAIL_PASS = 'test';
+process.env.MAIL_FROM = 'test@test.com';
