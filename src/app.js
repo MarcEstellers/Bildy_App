@@ -1,10 +1,12 @@
 import express from 'express';
 import helmet from 'helmet';
+import swaggerUi from 'swagger-ui-express';
 import mongoSanitizeMiddleware from './middleware/sanitize.middleware.js';
 import limiter from './middleware/rate-limit.js';
 import { join } from 'node:path';
 import router from './routes/index.js';
 import errorHandler from './middleware/error-handler.js';
+import swaggerSpec from './config/swagger.js';
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.use(mongoSanitizeMiddleware);
 app.use(limiter);
 
 app.use('/uploads', express.static(join(import.meta.dirname, '../uploads')));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/api', router);
 
