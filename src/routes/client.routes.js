@@ -8,9 +8,12 @@ const router = Router();
 
 router.use(validateUser);
 
-router.post('/',       validate(clientSchema.schemaCreateClient), clientController.createClient);
-router.get('/',                                                   clientController.getClients);
-router.get('/:id',    validate(clientSchema.schemaClientId),     clientController.getClient);
-router.put('/:id',    validate(clientSchema.schemaUpdateClient), clientController.updateClient);
+router.post('/',              validate(clientSchema.schemaCreateClient), clientController.createClient);
+router.get('/archived',                                                  clientController.getArchivedClients);
+router.get('/',                                                          clientController.getClients);
+router.get('/:id',            validate(clientSchema.schemaClientId),    clientController.getClient);
+router.put('/:id',            validate(clientSchema.schemaUpdateClient), clientController.updateClient);
+router.delete('/:id',         validate(clientSchema.schemaClientId),    clientController.deleteClient);
+router.patch('/:id/restore',  validate(clientSchema.schemaClientId),    clientController.restoreClient);
 
 export default router;
