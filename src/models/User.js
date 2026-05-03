@@ -37,7 +37,7 @@ const userSchema = new Schema(
         role: {
             type: String,
             enum: ["admin", "guest"],
-            default: "admin"
+            default: "guest"
         },
         status: {
             type: String,
@@ -58,11 +58,19 @@ const userSchema = new Schema(
             ref: 'Company',
         },
         address: {
-            street:   { type: String, default: "x" },
-            number:   { type: String, default: "x" },
-            postal:   { type: String, default: "x" },
-            city:     { type: String, default: "x" },
-            province: { type: String, default: "x" }
+            street:   { type: String, default: "" },
+            number:   { type: String, default: "" },
+            postal:   { type: String, default: "" },
+            city:     { type: String, default: "" },
+            province: { type: String, default: "" }
+        },
+        deleted: {
+            type: Boolean,
+            default: false
+        },
+        deletedAt: {
+            type: Date,
+            default: null
         }
     },
     {

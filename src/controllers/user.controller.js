@@ -183,10 +183,18 @@ export const deleteUser = async (req, res) => {
     const isSoft = req.query.soft === "true";
     const id = req.user._id;
 
-    const user = isSoft ? await User.softDeleteById(id) : await User.hardDelete(id);
-    
+    let user;
+    if (isSoft) {
+        user = await User.findByIdAndUpdate(id, { deleted: true, deletedAt: new Date() }, { new: true });
+    } else {
+        user = await User.findByIdAndDelete(id);
+        await RefreshToken.deleteMany({ user: id });
+    }
+
+    if (!user) throw AppError.notFound("Usuario");
+
     notificationService.deleteUser({ userId: id, soft: isSoft });
-    
+
     res.json({ message: `Usuario eliminado (${isSoft ? 'Lógico' : 'Físico'})`, user });
 };
 
