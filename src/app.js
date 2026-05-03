@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import swaggerUi from 'swagger-ui-express';
+import mongoose from 'mongoose';
 import mongoSanitizeMiddleware from './middleware/sanitize.middleware.js';
 import limiter from './middleware/rate-limit.js';
 import { join } from 'node:path';
@@ -25,9 +26,16 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', router);
 
 app.get('/', (req, res) => {
+    res.json({ message: "Bienvenido a la API", status: "Server Up & Running" });
+});
+
+app.get('/health', (req, res) => {
+    const dbState = mongoose.connection.readyState;
     res.json({
-        message: "Bienvenido a la API",
-        status: "Server Up & Running"
+        status: 'ok',
+        db: dbState === 1 ? 'connected' : 'disconnected',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
     });
 });
 
