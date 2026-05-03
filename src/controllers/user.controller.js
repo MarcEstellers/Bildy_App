@@ -5,6 +5,7 @@ import { AppError } from "../utils/AppError.js";
 import { generateAccessToken, generateRefreshToken, getRefreshTokenExpiry } from "../utils/handleJWT.js";
 import { compare, encrypt } from "../utils/handlePassword.js";
 import notificationService from "../services/notification.service.js";
+import { uploadLogo } from "../services/storage.service.js";
 
 const generateRandomCode = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -142,14 +143,14 @@ export const registerCompany = async (req, res) => {
     res.status(201).json({ message: "Compañía creada", user, company });
 };
 
-export const uploadLogo = async (req, res) => {
+export const uploadLogoController = async (req, res) => {
     if (!req.file) throw AppError.badRequest("No se ha subido ningún archivo");
     if (!req.user.company) throw AppError.forbidden("No tienes una compañía asociada");
 
-    const logoUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+    const logoUrl = await uploadLogo(req.file.buffer);
     const company = await Company.findByIdAndUpdate(
-        req.user.company, 
-        { logo: logoUrl }, 
+        req.user.company,
+        { logo: logoUrl },
         { new: true }
     );
 
