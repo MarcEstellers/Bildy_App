@@ -1,6 +1,8 @@
 import DeliveryNote from "../models/DeliveryNote.js";
 import Project from "../models/Project.js";
 import { AppError } from "../utils/AppError.js";
+import { uploadSignature, uploadPdf } from "../services/storage.service.js";
+import { generateDeliveryNotePdf } from "../services/pdf.service.js";
 
 export const createDeliveryNote = async (req, res) => {
     const { company, _id: user } = req.user;
@@ -65,6 +67,58 @@ export const getDeliveryNote = async (req, res) => {
     if (!deliveryNote) throw AppError.notFound("Albarán");
 
     res.json({ deliveryNote });
+};
+
+export const signDeliveryNote = async (req, res) => {
+    const { company } = req.user;
+
+    if (!company) throw AppError.forbidden("No tienes una compañía asociada");
+    if (!req.file) throw AppError.badRequest("No se ha subido ninguna firma");
+
+    const deliveryNote = await DeliveryNote.findOne({ _id: req.params.id, company, deleted: false })
+        .populate('user',    'name lastName email')
+        .populate('client',  'name cif email phone address')
+        .populate('project', 'name projectCode notes');
+
+    if (!deliveryNote) throw AppError.notFound("Albarán");
+    if (deliveryNote.signed) throw AppError.conflict("El albarán ya está firmado");
+
+    const signatureUrl = await uploadSignature(req.file.buffer);
+
+    deliveryNote.signed       = true;
+    deliveryNote.signedAt     = new Date();
+    deliveryNote.signatureUrl = signatureUrl;
+
+    const pdfBuffer = await generateDeliveryNotePdf(deliveryNote.toObject());
+    const pdfUrl    = await uploadPdf(pdfBuffer);
+
+    deliveryNote.pdfUrl = pdfUrl;
+    await deliveryNote.save();
+
+    res.json({ message: "Albarán firmado", deliveryNote });
+};
+
+export const downloadPdf = async (req, res) => {
+    const { company } = req.user;
+
+    if (!company) throw AppError.forbidden("No tienes una compañía asociada");
+
+    const deliveryNote = await DeliveryNote.findOne({ _id: req.params.id, company, deleted: false })
+        .populate('user',    'name lastName email')
+        .populate('client',  'name cif email phone address')
+        .populate('project', 'name projectCode notes');
+
+    if (!deliveryNote) throw AppError.notFound("Albarán");
+
+    if (deliveryNote.pdfUrl) {
+        return res.redirect(deliveryNote.pdfUrl);
+    }
+
+    const pdfBuffer = await generateDeliveryNotePdf(deliveryNote.toObject());
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="albaran-${deliveryNote._id}.pdf"`);
+    res.send(pdfBuffer);
 };
 
 export const deleteDeliveryNote = async (req, res) => {
