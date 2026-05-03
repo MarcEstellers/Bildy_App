@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { logErrorToSlack } from "../services/logger.service.js";
 
 const errorHandler = (err, req, res, next) => {
     if (err.isOperational) {
@@ -71,6 +72,8 @@ const errorHandler = (err, req, res, next) => {
     if (!isProduction) {
         console.error("INTERNAL_ERROR:", err);
     }
+
+    logErrorToSlack(err, req);
 
     res.status(500).json({
         error: true,

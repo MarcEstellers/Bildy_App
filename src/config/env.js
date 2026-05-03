@@ -13,7 +13,8 @@ const envSchema = z.object({
     MAIL_PORT: z.string().default('587'),
     MAIL_USER: z.string(),
     MAIL_PASS: z.string(),
-    MAIL_FROM: z.string()
+    MAIL_FROM: z.string(),
+    SLACK_WEBHOOK_URL: z.string().optional()
 });
 
 const parsed = envSchema.safeParse(process.env);
