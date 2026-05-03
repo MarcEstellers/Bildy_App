@@ -3,6 +3,7 @@ import Project from "../models/Project.js";
 import { AppError } from "../utils/AppError.js";
 import { uploadSignature, uploadPdf } from "../services/storage.service.js";
 import { generateDeliveryNotePdf } from "../services/pdf.service.js";
+import { getIO } from "../socket.js";
 
 export const createDeliveryNote = async (req, res) => {
     const { company, _id: user } = req.user;
@@ -18,6 +19,8 @@ export const createDeliveryNote = async (req, res) => {
         company,
         client: project.client
     });
+
+    getIO().to(`company:${company}`).emit('deliverynote:new', deliveryNote);
 
     res.status(201).json({ deliveryNote });
 };
@@ -94,6 +97,8 @@ export const signDeliveryNote = async (req, res) => {
 
     deliveryNote.pdfUrl = pdfUrl;
     await deliveryNote.save();
+
+    getIO().to(`company:${company}`).emit('deliverynote:signed', deliveryNote);
 
     res.json({ message: "Albarán firmado", deliveryNote });
 };
