@@ -1,0 +1,83 @@
+import DeliveryNote from "../models/DeliveryNote.js";
+import Project from "../models/Project.js";
+import { AppError } from "../utils/AppError.js";
+
+export const createDeliveryNote = async (req, res) => {
+    const { company, _id: user } = req.user;
+
+    if (!company) throw AppError.forbidden("No tienes una compañía asociada");
+
+    const project = await Project.findOne({ _id: req.body.project, company, deleted: false });
+    if (!project) throw AppError.notFound("Proyecto");
+
+    const deliveryNote = await DeliveryNote.create({
+        ...req.body,
+        user,
+        company,
+        client: project.client
+    });
+
+    res.status(201).json({ deliveryNote });
+};
+
+export const getDeliveryNotes = async (req, res) => {
+    const { company } = req.user;
+
+    if (!company) throw AppError.forbidden("No tienes una compañía asociada");
+
+    const { page = 1, limit = 10, project, client, format, signed, from, to, sort = '-workDate' } = req.query;
+
+    const filter = { company, deleted: false };
+    if (project) filter.project = project;
+    if (client)  filter.client  = client;
+    if (format)  filter.format  = format;
+    if (signed !== undefined) filter.signed = signed === 'true';
+    if (from || to) {
+        filter.workDate = {};
+        if (from) filter.workDate.$gte = new Date(from);
+        if (to)   filter.workDate.$lte = new Date(to);
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const totalItems = await DeliveryNote.countDocuments(filter);
+    const totalPages = Math.ceil(totalItems / Number(limit));
+
+    const deliveryNotes = await DeliveryNote.find(filter)
+        .populate('client',  'name cif')
+        .populate('project', 'name projectCode')
+        .sort(sort)
+        .skip(skip)
+        .limit(Number(limit));
+
+    res.json({ deliveryNotes, currentPage: Number(page), totalPages, totalItems });
+};
+
+export const getDeliveryNote = async (req, res) => {
+    const { company } = req.user;
+
+    if (!company) throw AppError.forbidden("No tienes una compañía asociada");
+
+    const deliveryNote = await DeliveryNote.findOne({ _id: req.params.id, company, deleted: false })
+        .populate('user',    'name lastName email')
+        .populate('client',  'name cif email phone address')
+        .populate('project', 'name projectCode address email notes');
+
+    if (!deliveryNote) throw AppError.notFound("Albarán");
+
+    res.json({ deliveryNote });
+};
+
+export const deleteDeliveryNote = async (req, res) => {
+    const { company } = req.user;
+
+    if (!company) throw AppError.forbidden("No tienes una compañía asociada");
+
+    const deliveryNote = await DeliveryNote.findOne({ _id: req.params.id, company, deleted: false });
+    if (!deliveryNote) throw AppError.notFound("Albarán");
+
+    if (deliveryNote.signed) throw AppError.forbidden("No se puede eliminar un albarán firmado");
+
+    await DeliveryNote.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Albarán eliminado" });
+};
