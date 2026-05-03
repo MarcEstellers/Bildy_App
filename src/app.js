@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import router from './routes/index.js';
 import errorHandler from './middleware/error-handler.js';
 import swaggerSpec from './config/swagger.js';
-
+//comentario
 const app = express();
 
 app.use(express.json());
