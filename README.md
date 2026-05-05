@@ -1,4 +1,4 @@
-# BildyApp – Documentación  Marc Estellers Pocovi
+# BildyApp – Documentación  Marc Estellers Pocoví
 
 Backend REST desarrollado con **Node.js**, **Express**, **MongoDB/Mongoose** y **Zod**.  
 Incluye gestión de usuarios, autenticación con **JWT + refresh tokens**, administración de compañías, subida de logos con **Multer**, validación avanzada, control de roles, borrado lógico y eventos con **EventEmitter**.
